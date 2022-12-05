@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tour Player</title>
+    <meta
+            name="viewport"
+            content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+            crossorigin="anonymous"
+    />
+    <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
+            integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+            crossorigin="anonymous"
+    />
+    <link
+            href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css"
+            rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.js"></script>
+    <link
+            rel="stylesheet"
+            href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.css"
+            type="text/css"
+    />
+  <script src="https://unpkg.com/mapbox-gl-draw-waypoint@1.0.3/dist/mapbox-gl-draw-waypoint.min.js"></script>
+
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+    <script src="https://unpkg.com/wavesurfer.js/dist/plugin/wavesurfer.regions.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <link href="css/custom.css" rel="stylesheet"/>
+    <!-- <link href="css/bootstrap.css" rel="stylesheet" /> -->
+
+</head>
+
+<body>
+<div class="bg-dark h-100 justify-content-center position-absolute w-100 p-5"
+     id="large-image" style="left: 0; top: 0;z-index: 10000;display: none">
+    <div class="position-absolute bg-light" style="right: 0;top: 0;">
+        <button onclick="closeImage()" type="button" class="btn-close p-4" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <img src="#">
+</div>
+<div id="waveformDiv">
+    <h6 class="p-2 position-absolute" id="tour-mp3-status" style="color: #f5f5dc">Loading track...</h6>
+    <div id="waveform">
+        <canvas
+                width="736"
+                height="160"
+                style="
+            position: absolute;
+            z-index: 2;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            height: 100%;
+            pointer-events: none;
+            width: 589px;
+          "
+        ></canvas>
+    </div>
+</div>
+<div id="audioFeature">
+    <a class="round-button" id="playPause"
+    ><i class="fa fa-play fa-2x" id="playPauseIcon"></i
+    ></a>
+    <select id="speed-select" style="display: none" class="speed-select" onchange="setSpeed(this.value)">
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2x</option>
+        <option value="2.5">2.5x</option>
+        <option value="3">3x</option>
+    </select>
+</div>
+<div class="d-flex flex-column" id="selectData">
+  <p id="timeCounter" class="m-0">
+    <span id="runAudioTime">00:00:00</span> /
+    <span id="fullAudioTime">00:00:00</span>
+  </p>
+  <select name="tourSelect" id="tourSelect" class="mb-1 rounded"></select>
+  <div id="loggedin" style="display: none;">
+	  <button id="save-btn" onclick="saveChanges()"
+			  type="button"
+			  class="btn btn-sm btn-success p-0"
+			  style="text-transform: uppercase;height: 23px;width: 109px;float:left;">Save Changes</button>
+	  <button id="remove-btn" onclick="removeTour()"
+			  type="button"
+			  class="btn btn-sm btn-secondary p-0"
+			  style="text-transform: uppercase;height: 23px;width: 59px;float:right;">Remove</button>
+  </div>
+  <div id="nachotour" style="display: none;">
+	  <button id="save-btn" onclick=""
+			  type="button"
+			  class="btn btn-sm btn-success p-0"
+			  style="text-transform: uppercase;height: 23px;width: 109px;float:left;" disabled>Not Saveable</button>
+	  <button id="remove-btn" onclick="removeTour()"
+			  type="button"
+			  class="btn btn-sm btn-secondary p-0"
+			  style="text-transform: uppercase;height: 23px;width: 59px;float:right;">Remove</button>
+  </div>
+  <button id="login-btn" onclick="login()"
+          type="button"
+          class="btn btn-sm btn-primary p-0"
+          style="text-transform: uppercase;height: 23px;width: 170px;">Login</button>
+</div>
+<div
+        style="
+        display: block;
+        position: absolute;
+        color: beige;
+        margin-top: 0.5rem;
+        right: 3px;
+        font-family: monospace;
+      "
+>
+    <div class="container">
+        <div id="main-div" class="col-lg-8 card">
+            <div class="form-group input-material" style="margin-left: 2%">
+                <input id="name" onkeyup="tourJson2.METADATA.TOUR_NAME = this.value;" type="text" required/>
+                <img
+                        src
+                        id="mainphoto" onerror="this.src='css/gallery.png'"
+                        onclick="openGalleryForID(this.id)"
+                />
+                <div><span style="color: #0095fc">Name of Tour</span></div>
+            </div>
+            <div class="form-group input-material" style="margin-left: 2%">
+                <input onkeyup="tourJson2.METADATA.GUIDE_NAME = this.value;" id="guidename" type="text" required/>
+            </div>
+            <div style="margin-left: 2%">
+                <span style="color: #0095fc">Name of Tour Guide(s)</span>
+            </div>
+            <div class="form-group input-material" style="margin-left: 2%">
+                <input 
+                        id="photographername"
+                        type="text"
+                        required onkeyup="tourJson2.METADATA.PHOTOG_NAME = this.value;"
+                />
+            </div>
+            <div style="margin-left: 2%">
+                <span style="color: #0095fc">Name of Photographer(s)</span>
+            </div>
+            <div id="SelectLang">
+                <select
+                        class="form-select"
+                        aria-label="Default select example"
+                        style="background-color: #81fd94; width: 255px"
+                        id="languageSelect"
+                        name="languageSelect" onchange="tourJson2.METADATA.LANGUAGE_ID = this.value;"
+                ></select>
+                <button
+                        type="submit"
+                        class="btn btn-primary"
+                        style=""
+                        id="add-clip-btn"
+                >+</button>
+            </div>
+
+
+            <div class="accordion" id="clipsAccordion"></div>
+<div id="add-clip-div" style="display: none">
+            <div class="clip_name_style">
+                <div
+                        class="form-group input-material"
+                        style="margin-left: 2%; color: gray"
+                        id="name_loop"
+                ></div>
+                <div class="line" id="clip_edit"></div>
+            </div>
+            <div class="form-group input-material row" style="margin-left: 2%">
+                <input id="clip_name" type="text" required autocomplete="off" />
+                <img
+                        src="css/gallery.png"
+                        id="clip_image"
+					 	class="clippedImage" onerror="this.src='css/gallery.png'"
+                />
+                <!--<div style="margin-bottom: 0.1rem" class="col-6">
+                    <span style="color: #0095fc">Name of Clip</span>
+                </div>-->
+            </div>
+            <div class="timeblock">
+                <!-- <div class="form-check-inline"> -->
+                <!-- <label class="form-check-label"> -->
+                <button onclick="setClipTime('left')"
+						class="setClipTime-left"
+                >{</button>
+                <input onkeyup="onStartChange()"
+                        class="rounded text-center"
+                        id="startdate"
+                        required autocomplete="off"
+                        placeholder="00:00:00"
+                />
+                <!-- <span style="color: #0095fc; margin-left: 1.3rem"
+                  >Start Time</span
+                > -->
+                <!-- </label
+              > -->
+                <!-- </div> -->
+                <!-- <div class="form-check-inline"> -->
+                <!-- <label class="form-check-label"> -->
+                <input onkeyup="onEndChange()"
+                        class="rounded text-center"
+                        id="enddate"
+                        required autocomplete="off"
+                        placeholder="00:00:00"
+                />
+                <button onclick="setClipTime('right')"
+						class="setClipTime-right"
+                >}</button>
+            </div>
+            <!--<div style="display: block;" class="row">
+
+                <span style="color: #0095fc; margin-left: 1.3rem"
+                >Start Time</span
+                >
+                <span style="color: #0095fc; margin-left: 1.3rem">End Time</span>
+            </div>-->
+            <!-- </label
+          > -->
+            <!-- </div> -->
+            <!-- </div> -->
+            <div
+                    class="d-none form-group"
+                    style="margin-left: 3%; margin-bottom: 0.5rem"
+            >
+            <textarea
+                    class="form-control transcript"
+                    id="transcriptios"
+            >
+            </textarea>
+            </div>
+            <div
+                    style="display: flex; margin-left: 0.5rem; margin-bottom: 0.2rem"
+            >
+                <div>
+                    <button
+                            id="clipLineString"
+                            type="submit"
+                            class="btn btn-primary"
+                            style="
+                  width: 3rem;
+                  padding: 2%;
+                  color: #fff;
+                  background-color: #0095fc;
+                  text-transform: uppercase;
+                  outline: 0;
+                  border-style: none;
+                  cursor: pointer;
+                "
+                    >
+                        Clip
+                    </button>
+                </div>
+                <div style="margin-left: 1rem;margin-top: 5px;">
+                    <label class="switch">
+                        <input onchange="smoothLineFunction(this.checked)" id="smooth-line" type="checkbox"/>
+                        <span class="slider round"></span
+                        ></label>
+                </div>
+                <div style="margin-left: 1rem">smooth line</div>
+            </div>
+            <!--<div-->
+                    <!--style="display: flex; margin-left: 0.5rem; margin-bottom: 0.2rem"-->
+            <!--&gt;-->
+                <!--<div>-->
+                    <!--<button-->
+                            <!--type="submit"-->
+                            <!--class="btn btn-primary"-->
+                            <!--style="-->
+                  <!--width: 3rem;-->
+                  <!--padding: 2%;-->
+                  <!--color: #fff;-->
+                  <!--background-color: #0095fc;-->
+                  <!--text-transform: uppercase;-->
+                  <!--outline: 0;-->
+                  <!--border-style: none;-->
+                <!--"-->
+                    <!--&gt;-->
+                        <!--Crib-->
+                    <!--</button>-->
+                <!--</div>-->
+                <!--<div style="margin-left: 1rem">-->
+                    <!--<label class="switch">-->
+                        <!--<input type="checkbox" checked/>-->
+                        <!--<span class="slider round"></span-->
+                        <!--&gt;</label>-->
+                <!--</div>-->
+                <!--<div style="margin-left: 1rem">remove silence</div>-->
+            <!--</div>-->
+            <div
+                    style="display: flex; margin-left: 0.5rem; margin-bottom: 0.5rem"
+            >
+                <div>
+                    <button onclick="addClip()"
+                            type="submit"
+                            class="btn btn-primary"
+                            style="
+                  width: 3rem;
+                  padding: 2%;
+                  color: #fff;
+                  background-color: #0095fc;
+                  text-transform: uppercase;
+                  outline: 0;
+                  border-style: none;
+                "
+                    >
+                        SAVE
+                    </button>
+                </div>
+                <div style="margin-left: 1rem;margin-top: 5px;">
+                    <label class="switch">
+                        <input id="review-check" type="checkbox"/> <span class="slider round"></span
+                    ></label>
+                </div>
+                <div style="margin-left: 1rem">request review</div>
+            </div>
+
+
+</div>
+        </div>
+    </div>
+</div>
+<div id="pointSecond">
+    <b>Number of seconds in audio : <span id="noOfSeconds"></span></b>
+    <br/><b>Number of points in map : <span id="noOfPoint"></span></b>
+</div>
+<button type="button" class="btn btn-primary" hidden data-bs-toggle="modal" data-bs-target="#gallery-modal"
+        id="gallery-modal-open-button">
+    Open modal
+</button>
+<div class="modal fade" id="gallery-modal" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index: 10060">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Gallery</h4>
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-primary" onclick="showSelectedValue()">Select Image</button>
+                    <button type="button" class="btn-close m-1" data-bs-dismiss="modal" id="gallery-modal-close"
+                            onclick="selectedGalleryImages={'image_type': '', 'src': ''}"></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <nav>
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <button class="nav-link active" id="nav-selected-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-selected" type="button" role="tab" aria-controls="nav-selected"
+                                aria-selected="true">Selected Images
+                        </button>
+                        <button class="nav-link" id="nav-new-tab" data-bs-toggle="tab" data-bs-target="#nav-new"
+                                type="button" role="tab" aria-controls="nav-new" aria-selected="false"
+                                onclick="showNewImages()">New
+                        </button>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div class="tab-pane fade show active" id="nav-selected" role="tabpanel">
+                        <div class="d-flex flex-wrap" id="gallery-modal-body-new-photos">
+
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="nav-new" role="tabpanel">
+                        <div class="lds-ring" id="gallery-loader">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+
+                        <div class="d-flex flex-wrap" id="gallery-modal-body"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="map"></div>
+<audio-player id="audioPlayerTag"></audio-player>
+<script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"
+></script>
+<script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+        integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+        crossorigin="anonymous"
+></script>
+<script type="text/javascript" src="./js/scripty.js"></script>
+<!--<script type="text/javascript" src="./js/lineSmooth.min.js"></script>-->
+</body>
+</html>

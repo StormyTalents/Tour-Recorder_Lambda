@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <style>
+        .bg-light {
+            background: #2C2C2B;
+        }
+
+        .login-container {
+            width: 50%;
+            border: 1px solid #000000;
+            background: #1f1f1f;
+            margin: 50px auto 30px auto;
+            border-radius: 5px;
+            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+            padding: 50px 30px;
+            text-align: center;
+        }
+
+        .login-button {
+            background-color: #F5841F;
+            border: none;
+            color: white;
+            padding: 15px 45px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .login-container h2 {
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="login-container">
+    <h2>Login</h2>
+    <button class="login-button" onclick="login()">Login using MetaMask</button>
+</div>
+<script>
+    async function login() {
+        if (!window.ethereum) {
+            alert('MetaMask not detected. Please install MetaMask first.');
+            return;
+        } else {
+            const accounts = await ethereum.request({method: 'eth_requestAccounts'});
+            setCookie('public_key', accounts[0], 0.1);
+            alert("Logged-in successfully");
+            window.location='/index.html'
+        }
+    }
+
+    function setCookie(cname, cvalue, exdays) {
+        const d = new Date();
+        d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+        let expires = "expires=" + d.toUTCString();
+        document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+
+    function getCookie(cname) {
+        let name = cname + "=";
+        let decodedCookie = decodeURIComponent(document.cookie);
+        let ca = decodedCookie.split(';');
+        for(let i = 0; i <ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) == ' ') {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0) {
+                return c.substring(name.length, c.length);
+            }
+        }
+        return "";
+    }
+</script>
+</body>
+</html>
